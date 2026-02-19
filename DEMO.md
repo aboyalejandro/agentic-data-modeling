@@ -11,6 +11,7 @@ By connecting Claude Code to OpenMetadata, you can ask natural language question
 - **Lineage Exploration**: Trace data flows from source to dashboard
 - **Governance**: Identify data owners and compliance requirements
 - **Metadata Enrichment**: Discover undocumented business logic by querying the database and writing enriched context back to the catalog
+- **AI Readiness**: Validate that models have the documentation, tests, and catalog presence needed for AI consumption
 
 ---
 
@@ -161,5 +162,74 @@ While enriching `daily_summary`, Claude Code reads the dbt SQL and notices sever
 
 ### Result
 What started as a routine enrichment task uncovered undocumented business logic: `avg_cpc` is an **average of averages**, not volume-weighted. The same applies to `avg_ctr`, `avg_session_duration`, `avg_pages_per_session`, and `avg_order_value`. These caveats are now documented in OpenMetadata for downstream consumers.
+
+</details>
+
+---
+
+## Use Case 6: AI Readiness Assessment
+
+**Prerequisite**: Postgres MCP and OpenMetadata MCP servers configured in `.mcp.json`
+
+**Question:** *"Is `user_journey` ready to be consumed by an AI agent?"*
+
+### The Challenge
+A model can have correct data but still be unusable by AI — missing descriptions, no ownership, no classification tags. Without a systematic check, these gaps go unnoticed until an agent fails silently or returns misleading answers. This skill checks both the dbt schema and the OpenMetadata catalog, then closes the gaps it can.
+
+<details>
+  <summary> <h4>✨ Click to see Claude Code output </h4> </summary>
+
+Claude Code runs a three-part audit against `user_journey`:
+
+1. **Checks dbt schema** → model has a description, all 15 columns are in YAML with descriptions, grain column (`user_id`) has `not_null` + `unique` tests
+2. **Checks OpenMetadata catalog** → entity exists, but finds 3 columns without descriptions, no ownership assigned, no classification tags
+3. **Queries the database** → confirms grain (4,521 rows, 4,521 distinct `user_id`s), profiles key columns, discovers that `journey_length_days` is 0 for 38% of users (single-session journeys). Builds 3 example queries for AI agents
+4. **Offers to fix** → generates structured descriptions (incorporating edge cases from the database) for the 3 missing columns and adds classification tags via `patch_entity`
+5. **Re-checks** → updated checklist shows improvement
+
+```
+## user_journey — AI Readiness
+
+### dbt Schema
+- [x] Model has description
+- [x] All SQL columns in YAML (15/15)
+- [x] All columns have descriptions
+- [x] Grain has uniqueness tests (user_id: not_null + unique)
+
+### OpenMetadata Catalog
+- [x] Entity exists
+- [x] Table has description
+- [ ] 3/15 columns missing descriptions
+- [ ] No ownership assigned
+- [x] Tags present
+- [ ] No freshness data
+
+### Query Guidance
+Grain check: 4,521 rows, 4,521 distinct user_ids ✓
+Edge cases found:
+- journey_length_days = 0 for 38% of users (single-session journeys)
+- total_conversion_value is NULL for non-converted users
+
+Example queries for AI agents:
+1. Converted multi-channel users with highest value:
+   SELECT user_id, channels_used, total_conversion_value
+   FROM user_journey WHERE user_type = 'converted' AND channels_used >= 3
+   ORDER BY total_conversion_value DESC LIMIT 10
+
+2. Journey length distribution by user type:
+   SELECT user_type, journey_length_category, COUNT(*)
+   FROM user_journey GROUP BY user_type, journey_length_category
+
+3. Users with high touchpoints but no conversion:
+   SELECT user_id, total_touchpoints, channels_used
+   FROM user_journey WHERE user_type = 'non-converted'
+   AND total_touchpoints > 10
+
+Before: PASS 5/9 | After fix: PASS 8/9
+Remaining: ownership (admin action), freshness (enable profiling)
+```
+
+### Result
+The model goes from **5/9 to 8/9** readiness. The database audit uncovered that 38% of users have zero-length journeys — a caveat now baked into the enriched descriptions. Auto-fixable gaps (column descriptions and tags) are patched into OpenMetadata with context from both dbt and the actual data. The query examples give AI agents a head start on how to consume the model. Remaining gaps — ownership and freshness — are flagged for manual action.
 
 </details>
