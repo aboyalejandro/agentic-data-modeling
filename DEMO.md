@@ -10,6 +10,7 @@ By connecting Claude Code to OpenMetadata, you can ask natural language question
 - **Data Discovery**: Find and validate data sources for analysis
 - **Lineage Exploration**: Trace data flows from source to dashboard
 - **Governance**: Identify data owners and compliance requirements
+- **Metadata Enrichment**: Discover undocumented business logic by querying the database and writing enriched context back to the catalog
 
 ---
 
@@ -135,4 +136,30 @@ Claude Code queries OpenMetadata for ownership information:
 
 ### Result
 The agent can quickly identify the dashboard owner and any associated teams or governance classifications, streamlining collaboration and accountability.
+</details>
+
+---
+
+## Use Case 5: Metadata Enrichment via Database Discovery
+
+**Prerequisite**: Postgres MCP and OpenMetadata MCP servers configured in `.mcp.json`
+
+**Question:** *"Can you enrich the metadata for `daily_summary`?"*
+
+### The Challenge
+The previous use cases are read-only — querying the catalog for answers. But what happens when the AI can also query the actual database? It can discover things that metadata alone can't reveal, and write those findings back to the catalog.
+
+<details>
+  <summary> <h4>✨ Click to see Claude Code output </h4> </summary>
+
+While enriching `daily_summary`, Claude Code reads the dbt SQL and notices several `avg()` columns (`avg_cpc`, `avg_ctr`, `avg_session_duration`, etc.). To validate the descriptions it's about to write, it queries the database — and accidentally discovers a statistical caveat:
+
+1. Reads `daily_summary.sql` and `_marts.yml` → builds context for all columns
+2. Notices `avg(cpc)` pattern → queries Postgres to compare `avg_cpc` vs `total_spend / NULLIF(total_clicks, 0)`
+3. The values diverge — `avg_cpc` is an unweighted average of per-campaign CPCs, not a true portfolio CPC
+4. Flags the finding, writes enriched descriptions back to OpenMetadata via `patch_entity`
+
+### Result
+What started as a routine enrichment task uncovered undocumented business logic: `avg_cpc` is an **average of averages**, not volume-weighted. The same applies to `avg_ctr`, `avg_session_duration`, `avg_pages_per_session`, and `avg_order_value`. These caveats are now documented in OpenMetadata for downstream consumers.
+
 </details>

@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "./PATH/TO/toolbox",
+      "args": ["--prebuilt", "postgres", "--stdio"],
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DATABASE": "postgres",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "password"
+      }
+    },
+    "openmetadata": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "http://localhost:8585/mcp",
+        "--auth-server-url=http://localhost:8585/mcp",
+        "--client-id=openmetadata",
+        "--header", "Authorization:${AUTH_HEADER}"
+      ],
+      "env": {
+        "AUTH_HEADER": "Bearer <YOUR_OPENMETADATA_JWT_TOKEN>"
+      }
+    }
+  }
+}
