@@ -11,6 +11,7 @@ A step by step guide on how to get started with this project.
 OPENMETADATA_JWT_TOKEN=your_jwt_token_here
 METABASE_USERNAME=your_metabase_username
 METABASE_PASSWORD=your_metabase_password
+METABASE_API_KEY=your_metabase_api_key_here
 ```
 
 2. Run the docker container:
@@ -91,6 +92,23 @@ Replace `<YOUR_OPENMETADATA_JWT_TOKEN>` in `.mcp.json` with the token you genera
 
 > **Docs**: [OpenMetadata MCP Reference](https://docs.open-metadata.org/v1.10.x/how-to-guides/mcp/reference)
 
+### Metabase MCP
+
+The `/metadata-exposure-enrichment` skill queries Metabase dashboards directly via the [nao-metabase-mcp-server](https://github.com/getnao/nao-mcp-servers). It is already configured in `.mcp.json`. You need to supply an API key.
+
+**Generate an API key:**
+1. Go to `http://localhost:3000/admin/settings/authentication/api-keys`
+2. Create a new API key
+3. Add it to your `.env`:
+
+```bash
+METABASE_API_KEY=your_api_key_here
+```
+
+Replace `<YOUR_METABASE_API_KEY>` in `.mcp.json` with your key.
+
+> **Docs**: [nao-metabase-mcp-server](https://github.com/getnao/nao-mcp-servers)
+
 ### Verify `.mcp.json`
 
 Your `.mcp.json` should look like this (already included in the repo):
@@ -121,6 +139,14 @@ Your `.mcp.json` should look like this (already included in the repo):
       "env": {
         "AUTH_HEADER": "Bearer <YOUR_OPENMETADATA_JWT_TOKEN>"
       }
+    },
+    "metabase": {
+      "command": "npx",
+      "args": ["-y", "@getnao/metabase-mcp-server@latest"],
+      "env": {
+        "METABASE_URL": "http://localhost:3000",
+        "METABASE_API_KEY": "<YOUR_METABASE_API_KEY>"
+      }
     }
   }
 }
@@ -136,6 +162,7 @@ Then use the MCP servers to ask questions such as:
 - "Who owns the Agentic Data Modeling Demo dashboard?"
 - "Is `user_journey` ready to be consumed by an AI agent?"
 - "Create a business glossary from our dbt models"
+- "Enrich the exposure for the Agentic Data Modeling Demo dashboard"
 
 ---
 

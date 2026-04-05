@@ -25,12 +25,13 @@ This project connects Claude to the data stack through **two MCP servers**, givi
 |---|---|---|
 | **OpenMetadata MCP** | Metadata catalog — lineage, search, glossaries, entity details | `search_metadata`, `get_entity_lineage`, `get_entity_details`, `create_glossary_term` |
 | **PostgreSQL MCP** | Direct database access — query data, profile columns, validate models | `execute_sql`, `list_tables`, `list_table_stats` |
+| **Metabase MCP** | Direct dashboard access — discover cards, questions, database metadata | `metabase-list-dashboards`, `metabase-get-dashboard`, `metabase-get-question` |
 
 The **PostgreSQL MCP** uses [Google GenAI Toolbox](https://github.com/googleapis/genai-toolbox) (pre-downloaded binary in `bin/toolbox`) to give Claude direct SQL access to the local PostgreSQL instance. This enables data profiling, edge case discovery, and validation queries — capabilities used heavily by the AI Readiness skill.
 
 The **OpenMetadata MCP** connects to the OpenMetadata server's native MCP endpoint, providing metadata search, lineage tracing, and glossary management through natural language.
 
-Both servers are configured in `.mcp.json` at the project root, with permissions managed in `.claude/settings.local.json`.
+All three servers are configured in `.mcp.json` at the project root, with permissions managed in `.claude/settings.local.json`.
 
 ### What this enables
 
@@ -43,7 +44,7 @@ Both servers are configured in `.mcp.json` at the project root, with permissions
 
 ## 🛠️ Claude Code Skills
 
-The project includes three custom **Claude Code skills** (in `.claude/skills/`) that encode repeatable data engineering workflows as slash commands. These skills combine the OpenMetadata and PostgreSQL MCP tools with local file analysis to automate common tasks:
+The project includes four custom **Claude Code skills** (in `.claude/skills/`) that encode repeatable data engineering workflows as slash commands. These skills combine the OpenMetadata and PostgreSQL MCP tools with local file analysis to automate common tasks:
 
 ### `/metadata-impact-analysis`
 Analyze downstream impact before making schema changes. Traces lineage through dbt models and dashboards to identify what breaks if a column is renamed, dropped, or its type changes.
@@ -53,6 +54,9 @@ Audit and enrich dbt mart models for AI consumption. Checks schema quality, quer
 
 ### `/metadata-glossary`
 Manage an OpenMetadata glossary derived from dbt models. Parses dbt YAML for column names and descriptions, groups them into business categories, and creates/syncs glossary terms via OpenMetadata.
+
+### `/metadata-exposure-enrichment`
+Enrich dbt exposure definitions by querying Metabase directly via MCP. Discovers dashboard cards, maps table and column references to dbt models, audits the existing `_exposures.yml` for gaps, and writes back a fully enriched exposure.
 
 ## 📚 Documentation
 
@@ -90,8 +94,8 @@ This setup enables a complete data analytics workflow where:
 2. dbt transforms and models the data locally
 3. Metabase provides interactive dashboards
 4. OpenMetadata centralizes metadata from all components via **YAML-based ingestion** (not UI), providing unified lineage and metadata views
-5. Claude connects via two MCP servers (OpenMetadata + PostgreSQL) for metadata exploration and direct data access
-6. Custom skills (`/metadata-impact-analysis`, `/metadata-ai-readiness`, `/metadata-glossary`) automate repeatable data engineering workflows
+5. Claude connects via three MCP servers (OpenMetadata + PostgreSQL + Metabase) for metadata exploration, direct data access, and dashboard discovery
+6. Custom skills (`/metadata-impact-analysis`, `/metadata-ai-readiness`, `/metadata-glossary`, `/metadata-exposure-enrichment`) automate repeatable data engineering workflows
 
 **Key Feature:** All OpenMetadata ingestion is configured through YAML files, enabling Infrastructure as Code (IaC) practices. Ingestion runs on-demand using Docker Compose profiles, giving you control over when metadata is synchronized. While OpenMetadata provides a UI for configuration, this project uses YAML files for version control, automation, and reproducibility.
 
@@ -101,8 +105,9 @@ This setup enables a complete data analytics workflow where:
 │   └── skills/                     # Custom Claude Code skills
 │       ├── metadata-impact-analysis/
 │       ├── metadata-ai-readiness/
-│       └── metadata-glossary/
-├── .mcp.json                       # MCP server definitions (Postgres + OpenMetadata)
+│       ├── metadata-glossary/
+│       └── metadata-exposure-enrichment/
+├── .mcp.json                       # MCP server definitions (Postgres + OpenMetadata + Metabase)
 ├── bin/
 │   └── toolbox                     # Google GenAI Toolbox binary (Postgres MCP)
 ├── dbt/                            # dbt project

@@ -1,0 +1,9 @@
+version: 2
+
+exposures:
+  - name: agentic_data_modeling_demo
+    type: dashboard
+    url: http://localhost:3000/dashboard/2
+    depends_on:
+      - ref('campaign_performance')
+      - ref('daily_summary')
