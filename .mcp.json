@@ -23,6 +23,14 @@
       "env": {
         "AUTH_HEADER": "Bearer <YOUR_OPENMETADATA_JWT_TOKEN>"
       }
+    },
+    "metabase": {
+      "command": "npx",
+      "args": ["-y", "@getnao/metabase-mcp-server@latest"],
+      "env": {
+        "METABASE_URL": "http://localhost:3000",
+        "METABASE_API_KEY": "<YOUR_METABASE_API_KEY>"
+      }
     }
   }
 }

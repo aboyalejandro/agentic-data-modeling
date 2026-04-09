@@ -1,0 +1,37 @@
+version: 2
+
+exposures:
+  - name: agentic_data_modeling_demo
+    type: dashboard
+    maturity: low
+    url: http://localhost:3000/dashboard/2
+    description: >
+      [Business Purpose] Marketing performance dashboard used to monitor campaign ROI,
+      conversion efficiency, revenue targets, and channel-level spend and device breakdown.
+      Supports daily decision-making on budget allocation and channel optimization.
+
+      [Cards] 6 cards:
+      (1) ROAS -- smartscalar showing average return on ad spend over time.
+      (2) CR% -- smartscalar showing average conversion rate over time.
+      (3) Target Revenue -- progress bar tracking cumulative revenue against a 100k goal.
+      (4) Daily Spend by Channel -- stacked bar chart of daily spend broken down by marketing channel.
+      (5) Desktop Per Channel -- pie chart of total desktop sessions by channel.
+      (6) Mobile Per Channel -- pie chart of total mobile sessions by channel.
+
+      [Key Columns] roas, conversion_rate, total_revenue, spend, desktop_sessions,
+      mobile_sessions, date, channel.
+
+      [Data Sources] campaign_performance mart (cards 1-3, 5-6) and campaigns_daily
+      raw source (card 4). daily_summary is an indirect dependency as a rollup of
+      campaign_performance.
+
+      [Known Issues / Caveats] Dashboard date filter defaults to past 7 days.
+      Card 43 (Daily Spend) queries the raw campaigns_daily source table directly
+      rather than a mart model.
+    owner:
+      name: Alejandro Aboy
+      email: aboyalejandro@gmail.com
+    depends_on:
+      - ref('campaign_performance')
+      - ref('daily_summary')
+      - source('marketing_raw', 'campaigns_daily')
