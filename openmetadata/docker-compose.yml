@@ -17,7 +17,7 @@ volumes:
 services:
   postgresql:
     container_name: openmetadata_postgresql
-    image: docker.getcollate.io/openmetadata/postgresql:1.11.3
+    image: docker.getcollate.io/openmetadata/postgresql:1.12.4
     restart: always
     command: "--work_mem=10MB"
     environment:
@@ -40,7 +40,7 @@ services:
 
   elasticsearch:
     container_name: openmetadata_elasticsearch
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
@@ -105,7 +105,7 @@ services:
   ingest-postgres:
     profiles: ["ingestion"]
     container_name: ingest_postgres_metadata
-    image: docker.getcollate.io/openmetadata/ingestion:1.11.3
+    image: docker.getcollate.io/openmetadata/ingestion:1.12.4
     volumes:
       - ./ingestion-configs:/opt/airflow/ingestion-configs
     environment:
@@ -137,7 +137,7 @@ services:
   ingest-dbt:
     profiles: ["ingestion"]
     container_name: ingest_dbt_metadata
-    image: docker.getcollate.io/openmetadata/ingestion:1.11.3
+    image: docker.getcollate.io/openmetadata/ingestion:1.12.4
     volumes:
       - ./ingestion-configs:/opt/airflow/ingestion-configs
       - ../dbt:/opt/openmetadata/dbt:ro
@@ -171,7 +171,7 @@ services:
 
   execute-migrate-all:
     container_name: execute_migrate_all
-    image: docker.getcollate.io/openmetadata/server:1.11.3
+    image: docker.getcollate.io/openmetadata/server:1.12.4
     command: "./bootstrap/openmetadata-ops.sh migrate"
     environment:
       OPENMETADATA_CLUSTER_NAME: ${OPENMETADATA_CLUSTER_NAME:-openmetadata}
@@ -393,7 +393,7 @@ services:
   openmetadata-server:
     container_name: openmetadata_server
     restart: always
-    image: docker.getcollate.io/openmetadata/server:1.11.3
+    image: docker.getcollate.io/openmetadata/server:1.12.4
     environment:
       OPENMETADATA_CLUSTER_NAME: ${OPENMETADATA_CLUSTER_NAME:-openmetadata}
       SERVER_PORT: ${SERVER_PORT:-8585}
@@ -560,7 +560,14 @@ services:
       OPENMETADATA_HEAP_OPTS: ${OPENMETADATA_HEAP_OPTS:--Xmx1G -Xms1G}
       # Mask passwords values in UI
       MASK_PASSWORDS_API: ${MASK_PASSWORDS_API:-false}
-      
+
+      # Semantic Search / Vector Embeddings
+      SEMANTIC_SEARCH_ENABLED: ${SEMANTIC_SEARCH_ENABLED:-false}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-""}
+      OPENAI_EMBEDDING_MODEL_ID: ${OPENAI_EMBEDDING_MODEL_ID:-text-embedding-3-small}
+      OPENAI_EMBEDDING_DIMENSION: ${OPENAI_EMBEDDING_DIMENSION:-1536}
+
       #OpenMetadata Web Configuration
       WEB_CONF_URI_PATH: ${WEB_CONF_URI_PATH:-"/api"}
       #HSTS
@@ -607,7 +614,7 @@ services:
 
   ingestion:
     container_name: openmetadata_ingestion
-    image: docker.getcollate.io/openmetadata/ingestion:1.11.3
+    image: docker.getcollate.io/openmetadata/ingestion:1.12.4
     depends_on:
       elasticsearch:
         condition: service_started
@@ -716,7 +723,7 @@ services:
   ingest-metabase:
     profiles: ["ingestion"]
     container_name: ingest_metabase_metadata
-    image: docker.getcollate.io/openmetadata/ingestion:1.11.3
+    image: docker.getcollate.io/openmetadata/ingestion:1.12.4
     volumes:
       - ./ingestion-configs:/opt/airflow/ingestion-configs
     environment:

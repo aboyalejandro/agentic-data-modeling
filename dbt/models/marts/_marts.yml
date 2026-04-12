@@ -78,7 +78,7 @@ models:
       - name: roas
         description: Return on ad spend (revenue / spend)
       - name: cost_per_conversion
-        description: Cost per acquisition - spend divided by conversions
+        description: Cost per acquisition: spend divided by conversions
       - name: click_to_session_rate
         description: Rate of clicks that resulted in sessions
 

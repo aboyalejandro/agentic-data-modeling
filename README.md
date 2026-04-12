@@ -54,6 +54,25 @@ Audit and enrich dbt mart models for AI consumption. Checks schema quality, quer
 ### `/metadata-glossary`
 Manage an OpenMetadata glossary derived from dbt models. Parses dbt YAML for column names and descriptions, groups them into business categories, and creates/syncs glossary terms via OpenMetadata.
 
+### `/metadata-enrich`
+Audit and fill missing or drifted descriptions across all dbt layers (raw sources, staging, intermediate, marts). Produces a full coverage report classifying every table and column as OK, Drift (dbt YAML written but not synced to OpenMetadata), or Missing. For any chosen table, generates layer-appropriate descriptions, presents them for review and editing, then writes confirmed descriptions to dbt YAML first (source of truth) before patching OpenMetadata. Supports per-table enrichment and batch mode (`all staging`, `all intermediate`, `all marts`).
+
+Trigger phrases: `enrich metadata`, `which tables have no description`, `fill metadata`, `generate descriptions`, `missing descriptions`.
+
+## 🤖 Slack Bot
+
+The project includes a Slack bot (`slack-bot/`) that brings the catalog assistant and all four skills directly into Slack. Mention the bot in any channel or reply in a thread to ask questions or trigger enrichment workflows.
+
+```
+@databot which tables have no description?
+@databot what columns does campaign_performance have?
+@databot enrich user_journey
+@databot what feeds into campaign_performance?
+```
+
+**How it works:** The bot uses Claude (claude-sonnet-4-6) with tool calling against the OpenMetadata REST API and the local dbt YAML files. It detects intent from the message, applies the matching skill workflow, and handles multi-step flows (audit → generate → review → confirm → apply) through Slack thread replies. Write operations always require explicit `confirm` before any file or catalog changes are made.
+
+See [QUICKSTART.md](QUICKSTART.md#slack-bot-setup) for setup instructions.
 ## 📚 Documentation
 
 This project includes comprehensive documentation to help you get started:
@@ -70,6 +89,7 @@ This project includes comprehensive documentation to help you get started:
   - Ownership and governance queries
   - AI readiness audits — enriching dbt models for AI consumption
   - Glossary management — deriving business terms from dbt into OpenMetadata
+  - Slack bot — catalog Q&A and skill workflows directly in Slack
 
 Start with the [Quick Start Guide](QUICKSTART.md) to set up your environment, then explore the [Demo Use Cases](DEMO.md) to see what's possible!
 
@@ -101,7 +121,15 @@ This setup enables a complete data analytics workflow where:
 │   └── skills/                     # Custom Claude Code skills
 │       ├── metadata-impact-analysis/
 │       ├── metadata-ai-readiness/
-│       └── metadata-glossary/
+│       ├── metadata-glossary/
+│       └── metadata-enrich/
+├── slack-bot/                      # Slack bot — catalog Q&A and skills via Slack
+│   ├── bot.py                      # Slack Bolt app (Socket Mode)
+│   ├── agent.py                    # Claude agent with tool calling + skill routing
+│   ├── om_client.py                # OpenMetadata REST client
+│   ├── yaml_tools.py               # dbt YAML read/write (safe path handling)
+│   ├── requirements.txt
+│   └── .env.example
 ├── .mcp.json                       # MCP server definitions (Postgres + OpenMetadata)
 ├── bin/
 │   └── toolbox                     # Google GenAI Toolbox binary (Postgres MCP)

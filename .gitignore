@@ -4,4 +4,3 @@ dbt/target/*
 dbt/logs/*
 dbt/.user.yml
 .env
-bin/

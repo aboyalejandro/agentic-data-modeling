@@ -12,6 +12,7 @@ By connecting Claude Code to OpenMetadata, you can ask natural language question
 - **Governance**: Identify data owners and compliance requirements
 - **AI Readiness**: Audit and enrich dbt models for AI consumption — checks schema quality, queries the database for edge cases, validates catalog presence, and writes fixes back to dbt YAML
 - **Glossary Management**: Derive business terms from dbt models and maintain them as a structured glossary in OpenMetadata
+- **Slack Bot**: Catalog Q&A and skill workflows directly in Slack — no terminal required
 
 ---
 
@@ -209,5 +210,70 @@ After creation, the glossary is live in OpenMetadata with all 6 categories and 2
 
 ### Result
 24 business terms organized under 6 categories in OpenMetadata. Each term links back to its source dbt model(s). Run `/metadata-glossary sync` to add missing terms incrementally, or `/metadata-glossary audit` for a dry-run diff.
+
+</details>
+
+---
+
+## Use Case 7: Slack Bot — Catalog Q&A and Skill Workflows in Slack
+
+**Prerequisite**: Slack bot configured and running (`slack-bot/bot.py`) — see [QUICKSTART.md](QUICKSTART.md#slack-bot-setup)
+
+**Trigger:** Mention `@databot` in any Slack channel
+
+### The Challenge
+The catalog and skills are powerful, but they require engineers to have Claude Code open. Business users and analysts can't easily ask questions about the data, check descriptions, or trigger enrichment workflows without a terminal. A Slack bot makes the catalog accessible to the whole team.
+
+<details>
+  <summary> <h4>✨ Click to see example interactions </h4> </summary>
+
+The bot uses Claude with tool calling against the OpenMetadata REST API and local dbt YAML files. It detects intent from the message and routes to the appropriate skill workflow.
+
+### Catalog Q&A
+
+```
+@databot what columns does campaign_performance have?
+```
+→ Bot calls `get_entity_details`, returns a formatted table of columns, data types, and descriptions.
+
+```
+@databot what feeds into campaign_performance?
+```
+→ Bot calls `get_entity_lineage`, traces upstream tables (`int_session_metrics_by_campaign`, `int_conversion_metrics_by_campaign`, `campaigns_daily`) and reports the full dependency chain.
+
+```
+@databot which tables have no description?
+```
+→ Bot reads all dbt YAML files and checks OpenMetadata, returns a layered coverage report (OK / Drift / Missing) across all 20 tables.
+
+### Enrichment workflow (multi-step in thread)
+
+```
+@databot enrich user_journey
+```
+
+**Step 1** — Bot reads dbt YAML + OpenMetadata, posts the review table in the thread:
+
+```
+Column            | dbt YAML | OpenMetadata | Action
+user_id           | ✓        | (empty)      | SYNC
+total_touchpoints | (empty)  | (empty)      | GENERATE: "Total number of marketing..."
+...
+Reply "confirm" to apply, or "skip {column}" to leave unchanged.
+```
+
+**Step 2** — User replies `confirm` in the thread
+
+**Step 3** — Bot writes updated descriptions to `dbt/models/marts/_marts.yml`, patches OpenMetadata via `patch_entity`, then confirms:
+
+```
+Update complete: user_journey
+- dbt/models/marts/_marts.yml: 15 fields written
+- OpenMetadata: 15 columns patched
+dbt YAML and OpenMetadata are now in sync.
+```
+
+### Result
+The entire catalog workflow — audit, generate, review, confirm, apply — runs inside Slack threads. Engineers and analysts can interact with the data catalog without leaving Slack or opening a terminal.
 
 </details>
