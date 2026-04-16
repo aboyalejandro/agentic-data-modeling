@@ -21,7 +21,7 @@
         "--header", "Authorization:${AUTH_HEADER}"
       ],
       "env": {
-        "AUTH_HEADER": "Bearer <YOUR_OPENMETADATA_JWT_TOKEN>"
+        "AUTH_HEADER": "Bearer ${OPENMETADATA_JWT_TOKEN}"
       }
     }
   }
