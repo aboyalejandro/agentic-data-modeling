@@ -43,7 +43,7 @@ Both servers are configured in `.mcp.json` at the project root, with permissions
 
 ## 🛠️ Claude Code Skills
 
-The project includes three custom **Claude Code skills** (in `.claude/skills/`) that encode repeatable data engineering workflows as slash commands. These skills combine the OpenMetadata and PostgreSQL MCP tools with local file analysis to automate common tasks:
+The project includes four custom **Claude Code skills** (in `.claude/skills/`) that encode repeatable data engineering workflows as slash commands. These skills combine the OpenMetadata and PostgreSQL MCP tools with local file analysis to automate common tasks:
 
 ### `/metadata-impact-analysis`
 Analyze downstream impact before making schema changes. Traces lineage through dbt models and dashboards to identify what breaks if a column is renamed, dropped, or its type changes.
@@ -111,7 +111,7 @@ This setup enables a complete data analytics workflow where:
 3. Metabase provides interactive dashboards
 4. OpenMetadata centralizes metadata from all components via **YAML-based ingestion** (not UI), providing unified lineage and metadata views
 5. Claude connects via two MCP servers (OpenMetadata + PostgreSQL) for metadata exploration and direct data access
-6. Custom skills (`/metadata-impact-analysis`, `/metadata-ai-readiness`, `/metadata-glossary`) automate repeatable data engineering workflows
+6. Custom skills (`/metadata-impact-analysis`, `/metadata-ai-readiness`, `/metadata-glossary`, `/metadata-enrich`) automate repeatable data engineering workflows
 
 **Key Feature:** All OpenMetadata ingestion is configured through YAML files, enabling Infrastructure as Code (IaC) practices. Ingestion runs on-demand using Docker Compose profiles, giving you control over when metadata is synchronized. While OpenMetadata provides a UI for configuration, this project uses YAML files for version control, automation, and reproducibility.
 
