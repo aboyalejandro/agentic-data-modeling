@@ -139,6 +139,73 @@ Then use the MCP servers to ask questions such as:
 
 ---
 
+## 🤖 Slack Bot Setup
+
+The Slack bot lets you query the catalog and run skill workflows directly from Slack.
+
+### 1. Create a Slack app
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. Name it (e.g. `databot`) → select your workspace
+
+**Enable Socket Mode** (no public URL needed):
+- Sidebar → **Socket Mode** → toggle On
+- Create an App-Level Token with scope `connections:write` → save the `xapp-...` token
+
+**Add Bot Token Scopes** (Sidebar → OAuth & Permissions → Bot Token Scopes):
+- `app_mentions:read`, `chat:write`, `channels:history`, `im:history`, `im:write`
+
+**Subscribe to Bot Events** (Sidebar → Event Subscriptions → Enable → Subscribe to bot events):
+- `app_mention`, `message.im`
+
+**Install the app**: Sidebar → OAuth & Permissions → **Install to Workspace** → copy the `xoxb-...` Bot Token
+
+**Invite the bot** to a channel in Slack: `/invite @databot`
+
+### 2. Configure environment
+
+```bash
+cd slack-bot
+cp .env.example .env
+```
+
+Edit `slack-bot/.env`:
+
+```bash
+SLACK_BOT_TOKEN=xoxb-...         # from OAuth & Permissions
+SLACK_APP_TOKEN=xapp-...         # from Basic Information > App-Level Tokens
+ANTHROPIC_API_KEY=sk-ant-...     # from console.anthropic.com
+OPENMETADATA_JWT_TOKEN=eyJ...    # same token from openmetadata/.env
+OPENMETADATA_HOST=http://localhost:8585
+```
+
+### 3. Install dependencies and run
+
+```bash
+pip install -r slack-bot/requirements.txt
+cd slack-bot
+python3 bot.py
+```
+
+You should see:
+```
+Starting databot...
+⚡️ Bolt app is running!
+```
+
+### 4. Try it in Slack
+
+```
+@databot which tables have no description?
+@databot what columns does campaign_performance have?
+@databot what feeds into campaign_performance?
+@databot enrich user_journey
+```
+
+Multi-step workflows (enrichment, glossary) run in Slack threads. The bot will show what it plans to write and wait for you to reply `confirm` before making any changes.
+
+---
+
 ## 📖 Next Steps
 
 **See these use cases in action!** Check out the [**Demo Documentation**](DEMO.md) for detailed walkthroughs showing:
